@@ -1,4 +1,297 @@
-     decline_message: ''
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+/**
+ * ============================================================================
+ * PROJECT LOVE.EXE
+ * A Gloomy Coquette × MS Paint × Windows 2000 Personal Confession Website
+ * ============================================================================
+ *
+ * STRICT PALETTE TOKENS:
+ *   --paper-white:     #FFFFFF
+ *   --porcelain-ivory: #F8F4F3
+ *   --ink-black:       #171419
+ *   --pure-black:      #000000
+ *   --hot-pink:        #F01483
+ *   --dusty-rose:      #DABBC4
+ *   --faded-mauve:     #A88D9A
+ *   --ash-grey:        #777078
+ *   --pale-blush:      #F1E3E7
+ *   --windows-blue:    #0A246A
+ *
+ * CUSTOMIZABLE CONTENT FILES (public/content/*.txt):
+ *   1. public/content/homepage.txt
+ *   2. public/content/ten_things.txt
+ *   3. public/content/letter.txt
+ *   4. public/content/confession.txt
+ *   5. public/content/responses.txt
+ * ============================================================================
+ */
+
+// ----------------------------------------------------------------------------
+// 1. DEFAULT UTF-8 PLAIN TEXT CONTENT FILES (public/content/*.txt)
+// ----------------------------------------------------------------------------
+const DEFAULT_CONTENT_FILES = {
+  'homepage.txt': `heading: for you, if you're still awake...
+subtitle: [p.s.: i started making this at 1:24am of 15 oct and ill be meeting you tomm lol.]
+top_note: saved in: C:\\My Documents\\for_you\\love_note.bmp
+middle_note: (please read these in order... start with Z)
+footer_note: handmade for one person only. best viewed at 2:00 am.
+z_key: Z
+z_label: 10 things I love about you
+z_hint: ← start here first
+y_key: Y
+y_label: click here
+y_hint: (read after Z...)
+x_key: X
+x_label: click here after you read all this
+x_hint: (save this one for last)`,
+
+  'ten_things.txt': `# Edit each numbered entry below (1 through 10).
+# Multi-line thoughts are supported inside each numbered block.
+# Never use HTML tags — all text is rendered safely as plain text.
+
+1.  Your music taste, because i genuinely got so happy when you told me that you have similar taste hehe
+---
+2.  The way you are irl, like you were so niceeee to me when we met irl 😭
+---
+3.  You were with me at my lowest and i realy appreciate that
+---
+4.  Your aesthetics and vibe :3 (if you havent noticed, i tried to make the website like your aesthetics)
+---
+5.  Your family, like i was wondering HOW CAN SOMEONE HAS THIS COOL FAMILY, LIKE YOUR SIS, BUA AND MUM ARE SO COOL IRL
+---
+6.  Your voice, like i know you're insecure about it but i genuinely find it sweet and pretty unique
+---
+7.  The way you react when i tell you stuff, like no girl has ever listened to me that well as much as you did >w< 
+---
+8.  When you were with me in the garba while knowing the fact that you'll rarely meet your school friends again
+---
+9.  The way you said that you missed me even when i texted you after i ignored you for the entire day 😭
+---
+10. Everything, like i love everything about you and these are just a few top 10/9 of them :3 `,
+
+  'letter.txt': `something I wanted to tell you...
+
+  Beloved yamini,
+
+ YOU ABSOLUTELY DONT KNOW HOW BADLY I LIKE YOU, like you're the most awesome person i have ever met and i think the thing i feel for you is something above friendship (i hope ykw i mean 😭)
+
+
+ You'll be wondering why didnt i simply said it in texts, but according to me those are pretty uncool, like saying it in texts and making an entire website for it are different things and you deserve more than a simple text 😭😭😭
+
+ Also im a bit shy to say it but i started to realllyyyyyyyyyyyy like you since we started talking and i have like never felt this way before compared to how i feel being with you 😭😭😭😭😭😭, like dyk that i got reallllllyy impressed when you said albert camus when i mentioned about the absurd, like ARRAGRAHRGARGHHHHHHHHH >o<
+
+ You met me at a very strange time in my life, and im SO glad that i met you, like i dont know what ill be without you, like i dont have friends as good as you and I also hope that you like this letter 😭😭
+ (p.s.: scroll very down and play the music before you switch to another page hehe)
+
+ Always yours, 
+— Ullhas `,
+
+  'confession.txt': `heading: one last thing before you close this window...
+body: I really like you and see you more as a friend, I wish you feel the same way i feel for you 😭💗
+
+I am not forcing you and its really upto you :3
+
+question: Can i be your boyfriend?
+quiet_note: Take all the time you need ^^ `,
+
+  'responses.txt': `accept_label: Yes, I'd like that.
+accept_title: YOU REALLY DONT KNOW HOW MUCH HAPPY THAT MAKES ME
+accept_message: I reallllyy appreciate that you feel the same way that i do for you and idk what to say 😭😭😭😭😭
+decline_label: Not that way, but thank you.
+decline_title: ERROR 404, button not working
+decline_message: ERROR 404`,
+
+  'README.txt': `======================================================================
+PROJECT LOVE.EXE — HOW TO CUSTOMIZE YOUR CONTENT FILES
+======================================================================
+
+All personal writing lives in plain UTF-8 text files inside:
+  public/content/
+
+You never need to edit React components or CSS code to personalize this
+website. Simply edit the five text files below in any plain-text editor
+(such as Notepad, TextEdit, or VS Code), save as UTF-8, and refresh.
+
+1. public/content/homepage.txt
+   - Format: key: value lines (heading, subtitle, top_note, middle_note,
+     footer_note, z_key, z_label, z_hint, y_key, y_label, y_hint,
+     x_key, x_label, x_hint).
+
+2. public/content/ten_things.txt
+   - Format: Separate each of the 10 reasons with a line containing "---".
+   - Lines starting with "#" are ignored as comments.
+   - Multi-line entries and leading numbers ("1. ...") are supported.
+
+3. public/content/letter.txt
+   - Format: Freeform plain text.
+   - If the first line is followed by a blank line, it is used as the
+     letter title (default: "something I wanted to tell you...").
+   - Every paragraph break and intentional blank line is preserved.
+   - The final paragraph or lines starting with "—" / "-" are styled
+     gently as your handwritten signature.
+
+4. public/content/confession.txt
+   - Format: key: value sections (heading, body, question, quiet_note).
+   - Multi-paragraph text under "body:" is supported until "question:".
+
+5. public/content/responses.txt
+   - Format: key: value lines (accept_label, accept_title, accept_message,
+     decline_label, decline_title, decline_message).
+
+SECURITY & SAFETY NOTE:
+- All text files are rendered strictly as plain text nodes.
+- HTML tags (like <script> or <img>) are never executed and will appear
+  harmlessly as literal characters.`
+};
+
+const STORAGE_PREFIX = 'project_love_exe_content_v1_';
+
+// ----------------------------------------------------------------------------
+// 2. CONTENT FILE PARSERS (SAFE PLAIN-TEXT PARSING, ZERO HTML INJECTION)
+// ----------------------------------------------------------------------------
+
+function parseHomepageTxt(raw) {
+  if (!raw || !raw.trim()) return null;
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  const data = {
+    heading: "for you, if you're still awake...",
+    subtitle: '',
+    top_note: 'C:\\My Documents\\love_note\\index.htm',
+    middle_note: '(read in order: Z → Y → X)',
+    footer_note: '',
+    z_key: 'Z',
+    z_label: '10 things I love about you',
+    z_hint: '← start here',
+    y_key: 'Y',
+    y_label: 'click here',
+    y_hint: '(after Z...)',
+    x_key: 'X',
+    x_label: 'click here after you read all this',
+    x_hint: '(read last)'
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const colonIdx = trimmed.indexOf(':');
+    if (colonIdx !== -1) {
+      const key = trimmed.slice(0, colonIdx).trim();
+      const val = trimmed.slice(colonIdx + 1).trim();
+      if (key in data) {
+        data[key] = val;
+      }
+    }
+  }
+  return data;
+}
+
+function parseTenThingsTxt(raw) {
+  if (!raw || !raw.trim()) return null;
+  const cleanedLines = raw
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('#'));
+  const joined = cleanedLines.join('\n').trim();
+  if (!joined) return null;
+
+  let blocks = [];
+  if (joined.includes('\n---')) {
+    blocks = joined
+      .split(/\n---\s*\n?/)
+      .map((b) => b.trim())
+      .filter(Boolean);
+  } else {
+    blocks = joined
+      .split(/\n(?=\d+[\.\)]\s)/)
+      .map((b) => b.trim())
+      .filter(Boolean);
+  }
+
+  return blocks.map((block, index) => {
+    const match = block.match(/^(\d+)[\.\)]\s*([\s\S]*)$/);
+    if (match) {
+      return {
+        number: match[1],
+        text: match[2].trim()
+      };
+    }
+    return {
+      number: String(index + 1),
+      text: block
+    };
+  });
+}
+
+function parseLetterTxt(raw) {
+  if (!raw || !raw.trim()) return null;
+  const normalized = raw.replace(/\r\n/g, '\n');
+  const lines = normalized.split('\n');
+
+  let title = 'something I wanted to tell you...';
+  let startIdx = 0;
+
+  if (lines.length >= 2 && lines[0].trim() !== '' && lines[1].trim() === '') {
+    title = lines[0].trim();
+    startIdx = 2;
+  }
+
+  const bodyLines = lines.slice(startIdx);
+  return {
+    title,
+    lines: bodyLines
+  };
+}
+
+function parseConfessionTxt(raw) {
+  if (!raw || !raw.trim()) return null;
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  const result = {
+    heading: 'one last thing...',
+    bodyParagraphs: [],
+    question: 'Would you like to go out with me sometime?',
+    quiet_note: ''
+  };
+
+  let currentKey = null;
+  let bodyBuffer = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#')) continue;
+
+    const keyMatch = line.match(/^(heading|body|question|quiet_note):\s*(.*)$/);
+    if (keyMatch) {
+      const [, key, val] = keyMatch;
+      currentKey = key;
+      if (key === 'body') {
+        if (val.trim()) bodyBuffer.push(val.trim());
+      } else {
+        result[key] = val.trim();
+      }
+    } else if (currentKey === 'body') {
+      bodyBuffer.push(line);
+    }
+  }
+
+  const rawBody = bodyBuffer.join('\n').trim();
+  result.bodyParagraphs = rawBody
+    ? rawBody.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    : [];
+
+  return result;
+}
+
+function parseResponsesTxt(raw) {
+  if (!raw || !raw.trim()) return null;
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  const result = {
+    accept_label: "Yes, I'd like that.",
+    accept_title: 'thank you.',
+    accept_message: '',
+    decline_label: 'Not that way, but thank you.',
+    decline_title: 'thank you for telling me honestly.',
+    decline_message: ''
   };
 
   for (const line of lines) {
